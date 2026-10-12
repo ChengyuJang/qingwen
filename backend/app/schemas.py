@@ -54,3 +54,63 @@ class MessageOut(BaseModel):
     agent: str | None
     content: str
     created_at: datetime
+# ---------- DailyLog ----------
+class DailyLogCreate(BaseModel):
+    log_date: datetime
+    trained: bool = False
+    training_note: str | None = None
+    diet_note: str | None = None
+    sleep_hours: float | None = Field(default=None, ge=0, le=24)
+    mood: str | None = None
+    note: str | None = None
+
+
+class DailyLogOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    log_date: datetime
+    trained: bool
+    training_note: str | None
+    diet_note: str | None
+    sleep_hours: float | None
+    mood: str | None
+    note: str | None
+    created_at: datetime
+
+
+# ---------- Weight ----------
+class WeightCreate(BaseModel):
+    record_date: datetime
+    weight_kg: float = Field(gt=0, lt=500)
+    note: str | None = None
+
+
+class WeightOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    record_date: datetime
+    weight_kg: float
+    note: str | None
+    created_at: datetime
+
+
+class WeightTrendPoint(BaseModel):
+    record_date: datetime
+    weight_kg: float
+
+# ---------- Plan ----------
+class PlanOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    session_id: int
+    kind: str
+    content: dict
+    summary: str | None
+    created_at: datetime
+
+
+class SessionWithPreview(SessionOut):
+    last_message: str | None = None

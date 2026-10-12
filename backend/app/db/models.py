@@ -134,3 +134,45 @@ class Plan(Base):
     __table_args__ = (
         UniqueConstraint("session_id", "kind", name="uq_plan_session_kind"),
     )
+class DailyLog(Base):
+    """每日打卡：训练、饮食、睡眠、体重、感受。"""
+    __tablename__ = "daily_logs"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    log_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True, nullable=False)
+    trained: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    training_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    diet_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    sleep_hours: Mapped[float | None] = mapped_column(nullable=True)
+    mood: Mapped[str | None] = mapped_column(String(20), nullable=True)  # great/good/ok/bad/awful
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "log_date", name="uq_daily_log_user_date"),
+    )
+
+
+class WeightRecord(Base):
+    """体重记录。"""
+    __tablename__ = "weight_records"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    record_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True, nullable=False)
+    weight_kg: Mapped[float] = mapped_column(nullable=False)
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "record_date", name="uq_weight_user_date"),
+    )

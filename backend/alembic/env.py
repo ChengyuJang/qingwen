@@ -22,6 +22,14 @@ config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 target_metadata = Base.metadata
 
+def _include_object(obj, name, type_, reflected, compare_to):
+    """排除手动管理的 pgvector 表，避免 autogenerate 生成 DROP。"""
+    if type_ == "table" and name == "knowledge_chunks":
+        return False
+    if type_ == "index" and name and name.startswith("idx_chunks_"):
+        return False
+    return True
+
 
 def run_migrations_offline() -> None:
     url = config.get_main_option("sqlalchemy.url")
@@ -31,6 +39,7 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
+        include_object=_include_object,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -41,6 +50,7 @@ def do_run_migrations(connection: Connection) -> None:
         connection=connection,
         target_metadata=target_metadata,
         compare_type=True,
+        include_object=_include_object,
     )
     with context.begin_transaction():
         context.run_migrations()
