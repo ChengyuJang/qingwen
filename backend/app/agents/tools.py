@@ -105,12 +105,48 @@ def search_exercise(
 
     return ToolChunk(content=[TextBlock(type="text", text=text)])
 
+# ---------- 工具 3：RAG 知识库检索 ----------
+async def search_knowledge(query: str, top_k: int = 5) -> ToolChunk:
+    """在训练知识库中检索相关动作和训练科学知识。
+
+    当用户问具体的训练动作、动作要点、组数次数、动作替换、某个肌群怎么练时，
+    调用此工具检索权威知识，再基于检索结果回答。
+
+    Args:
+        query: 用户问题或需要检索的关键词，例如"哑铃练腿动作"、"膝盖不好怎么练腿"
+        top_k: 返回条数，默认 5，最多 10
+    """
+    from app.db.session import AsyncSessionLocal
+    from rag.retriever import search as rag_search
+
+    top_k = max(1, min(top_k, 10))
+
+    async with AsyncSessionLocal() as db:
+        chunks = await rag_search(db, query, top_k=top_k, source="exercise_lib")
+
+    if not chunks:
+        return ToolChunk(
+            content=[TextBlock(type="text", text="知识库中未找到相关内容。")]
+        )
+
+    lines = []
+    for i, c in enumerate(chunks, 1):
+        meta = c.metadata or {}
+        lines.append(
+            f"{i}. 【{c.title}】"
+            f"（目标：{meta.get('target', '-')}，器械：{meta.get('equipment', '-')}，"
+            f"相似度：{c.similarity:.2f}）\n{c.content}"
+        )
+    text_out = "\n\n".join(lines)
+    return ToolChunk(content=[TextBlock(type="text", text=text_out)])
+
+
 
 # ---------- Toolkit 构造（async，工具标记为只读以跳过权限确认） ----------
 async def build_training_toolkit() -> Toolkit:
     t = Toolkit()
     await t.add_tool(FunctionTool(fitness_calc, is_read_only=True))
-    await t.add_tool(FunctionTool(search_exercise, is_read_only=True))
+    await t.add_tool(FunctionTool(search_knowledge, is_read_only=True))
     return t
 
 
