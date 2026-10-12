@@ -1,0 +1,121 @@
+.wrap {
+  padding: 40px 56px 64px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 40px;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 32px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  margin-bottom: 8px;
+}
+
+.sub {
+  font-size: 14px;
+  color: var(--muted);
+  font-weight: 300;
+}
+
+/* ---------- 分区 ---------- */
+.section {
+  margin-bottom: 32px;
+}
+
+.sectionLabel {
+  font-size: 11px;
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.card {
+  padding: 4px 24px;
+  border-radius: var(--radius-lg);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ---------- 行 ---------- */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 0;
+}
+
+.rowIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: rgba(201, 169, 110, 0.12);
+  color: var(--gold-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.rowContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.rowLabel {
+  font-size: 13px;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+  margin-bottom: 2px;
+}
+
+.rowValue {
+  font-size: 14px;
+  color: var(--ink-soft);
+  font-family: var(--font-serif);
+  letter-spacing: 0.01em;
+}
+
+.rowHint {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 300;
+  margin-top: 2px;
+}
+
+.divider {
+  height: 1px;
+  background: var(--line);
+  margin: 0;
+}
+
+/* ---------- 退出按钮 ---------- */
+.logoutBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 24px;
+  border-radius: var(--radius-lg);
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  transition: all var(--duration) var(--ease);
+}
+
+.logoutBtn:hover {
+  border-color: rgba(184, 92, 74, 0.4);
+  color: var(--error);
+  background: rgba(184, 92, 74, 0.04);
+}

@@ -1,0 +1,35 @@
+.card {
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  transition: all var(--duration) var(--ease);
+}
+
+/* 玻璃拟态 */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-lg);
+}
+
+/* 实心白 */
+.solid {
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-md);
+}
+
+/* 无边框（用于列表项） */
+.plain {
+  background: transparent;
+  padding: var(--space-4);
+}
+
+/* 可点击（hover 上浮） */
+.clickable {
+  cursor: pointer;
+}
+.clickable:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+}

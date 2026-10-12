@@ -1,0 +1,90 @@
+/* ============================================================
+   轻问 · 设计系统 · 变量
+   参考风格：暖米色 + 金色点缀 + 玻璃拟态
+   ============================================================ */
+
+:root {
+  /* ---------- 颜色 ---------- */
+  --bg:          #F5F1EB;   /* 主背景 - 暖米色 */
+  --bg-soft:     #EFEAE1;   /* 次级背景 - 侧边栏 */
+  --bg-elevated: #FFFFFF;   /* 卡片底 */
+
+  --ink:         #1C1C1E;   /* 主文字 - 近黑 */
+  --ink-soft:    #4A4A4D;   /* 次级文字 */
+  --muted:       #8C8279;   /* 弱化文字 - 暖灰 */
+
+  --gold:        #C9A96E;   /* 品牌金 */
+  --gold-dark:   #A88A50;   /* 金色 hover */
+  --sage:        #4A5D4E;   /* 鼠尾草绿 - 成功/自然 */
+
+  --line:        rgba(28, 28, 30, 0.08);  /* 分隔线 */
+  --line-strong: rgba(28, 28, 30, 0.15);
+
+  /* ---------- 语义色 ---------- */
+  --success:     #4A5D4E;   /* 同 sage */
+  --warning:     #C9A96E;   /* 同 gold */
+  --error:       #B85C4A;   /* 暖砖红 */
+  --info:        #5A6B7A;   /* 灰蓝 */
+
+  /* ---------- 玻璃拟态 ---------- */
+  --glass-bg:     rgba(255, 255, 255, 0.55);
+  --glass-bg-2:   rgba(255, 255, 255, 0.75);
+  --glass-blur:   blur(20px);
+  --glass-border: rgba(201, 169, 110, 0.25);
+
+  /* ---------- 字体 ---------- */
+  --font-sans:    'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-serif:   'Noto Serif SC', 'Songti SC', serif;
+
+  /* ---------- 字号 ---------- */
+  --text-xs:   11px;
+  --text-sm:   13px;
+  --text-base: 15px;
+  --text-lg:   17px;
+  --text-xl:   22px;
+  --text-2xl:  28px;
+  --text-3xl:  36px;
+
+  /* ---------- 字距 ---------- */
+  --tracking-wide:  0.04em;
+  --tracking-wider: 0.08em;
+  --tracking-widest: 0.18em;
+
+  /* ---------- 行高 ---------- */
+  --leading-tight:  1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.8;
+
+  /* ---------- 间距（8px 基准） ---------- */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ---------- 圆角 ---------- */
+  --radius-sm:     8px;
+  --radius-md:     12px;
+  --radius-lg:     20px;
+  --radius-xl:     24px;
+  --radius-pill:   100px;
+  --radius-circle: 50%;
+
+  /* ---------- 阴影 ---------- */
+  --shadow-sm:   0 2px 8px rgba(28, 28, 30, 0.05);
+  --shadow-md:   0 8px 32px rgba(28, 28, 30, 0.06);
+  --shadow-lg:   0 24px 80px rgba(28, 28, 30, 0.08);
+  --shadow-xl:   0 32px 100px rgba(28, 28, 30, 0.12);
+
+  /* ---------- 动效 ---------- */
+  --ease:        cubic-bezier(0.4, 0, 0.2, 1);
+  --duration:    0.35s;
+  --duration-fast: 0.2s;
+
+  /* ---------- 布局 ---------- */
+  --sidebar-width: 248px;
+  --topbar-height: 68px;
+}

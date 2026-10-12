@@ -1,0 +1,86 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-wide);
+  transition: all var(--duration) var(--ease);
+  white-space: nowrap;
+  cursor: pointer;
+  border: none;
+  font-family: var(--font-sans);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* ---------- 变体：primary（黑底药丸） ---------- */
+.primary {
+  padding: 16px 32px;
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  color: var(--bg);
+}
+.primary:hover:not(:disabled) {
+  background: var(--gold);
+  color: var(--ink);
+  transform: translateY(-2px);
+}
+
+/* ---------- 变体：ghost（无边框文字按钮） ---------- */
+.ghost {
+  padding: 8px 12px;
+  background: transparent;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+.ghost:hover:not(:disabled) {
+  color: var(--ink);
+}
+
+/* ---------- 变体：outline（描边药丸） ---------- */
+.outline {
+  padding: 10px 24px;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.outline:hover:not(:disabled) {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+/* ---------- 变体：gold（金色描边，用于 CTA） ---------- */
+.gold {
+  padding: 10px 20px;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: var(--text-sm);
+}
+.gold:hover:not(:disabled) {
+  border-color: var(--gold);
+  color: var(--gold);
+  transform: translateY(-1px);
+}
+
+/* ---------- 尺寸 ---------- */
+.sm {
+  padding: 8px 16px;
+  font-size: var(--text-xs);
+}
+.lg {
+  padding: 18px 36px;
+  font-size: var(--text-base);
+}
+.block {
+  width: 100%;
+}

@@ -1,0 +1,15 @@
+.label {
+  display: block;
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: var(--space-2);
+  font-weight: 500;
+  line-height: 16px;
+  height: 16px;               /* ← 新增 */
+}
+
+.muted {
+  color: var(--muted);
+}

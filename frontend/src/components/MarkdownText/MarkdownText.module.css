@@ -1,0 +1,72 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ---------- 小标题 ---------- */
+.heading {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+  margin-top: 4px;
+  padding-left: 12px;
+  position: relative;
+}
+
+.heading::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--gold);
+}
+
+/* ---------- 段落 ---------- */
+.para {
+  font-size: 14px;
+  line-height: 1.85;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+/* ---------- 列表 ---------- */
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.listItem {
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--ink-soft);
+  padding-left: 18px;
+  position: relative;
+}
+
+.listItem::before {
+  content: '·';
+  position: absolute;
+  left: 4px;
+  top: 0;
+  color: var(--gold);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* ---------- 加粗 ---------- */
+.strong {
+  color: var(--ink);
+  font-weight: 600;
+}

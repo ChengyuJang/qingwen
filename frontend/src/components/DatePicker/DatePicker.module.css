@@ -1,0 +1,205 @@
+.wrap {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+/* ---------- 触发按钮 ---------- */
+.trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;           /* ← 改成 12px 16px，和 Input 一致 */
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.6);
+  font-size: 14px;              /* ← 改成 14px */
+  color: var(--ink);
+  text-align: left;
+  transition: all var(--duration-fast) var(--ease);
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  height: 44px;                 /* ← 新增：锁定高度，两端都对齐 */
+  box-sizing: border-box;
+}
+
+.triggerOpen {
+  border-color: rgba(201, 169, 110, 0.5);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.1);
+}
+
+.trigger svg {
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.valueText {
+  color: var(--ink);
+  letter-spacing: 0.02em;
+  white-space: nowrap;          /* ← 新增 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.placeholder {
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+/* ---------- 弹出面板 ---------- */
+.panel {
+  position: absolute;
+  z-index: 100;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 280px;
+  padding: 18px 16px 14px;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 24px 60px rgba(28, 28, 30, 0.15);
+  animation: dpRise 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes dpRise {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.monthLabel {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+}
+
+.navBtn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: var(--muted);
+  transition: all 0.2s var(--ease);
+}
+.navBtn:hover {
+  background: rgba(201, 169, 110, 0.12);
+  color: var(--gold-dark);
+}
+
+/* 星期表头 */
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 6px;
+}
+
+.weekday {
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  padding: 4px 0;
+}
+
+/* 日期网格 */
+.days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.day {
+  width: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  transition: all 0.15s var(--ease);
+  cursor: pointer;
+}
+
+.day:hover {
+  background: rgba(201, 169, 110, 0.15);
+  color: var(--gold-dark);
+}
+
+.dayMuted {
+  color: var(--muted);
+  opacity: 0.45;
+}
+.dayMuted:hover {
+  opacity: 1;
+}
+
+.dayToday {
+  color: var(--gold);
+  font-weight: 500;
+  box-shadow: inset 0 0 0 1px rgba(201, 169, 110, 0.4);
+}
+
+.daySelected {
+  background: var(--ink) !important;
+  color: var(--bg) !important;
+  font-weight: 500;
+  box-shadow: none;
+}
+.daySelected:hover {
+  background: var(--gold) !important;
+  color: var(--ink) !important;
+}
+
+/* 底部 */
+.panelFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.footerBtn {
+  font-size: 13px;
+  color: var(--muted);
+  padding: 6px 10px;
+  border-radius: 8px;
+  letter-spacing: 0.02em;
+  transition: all 0.2s var(--ease);
+}
+.footerBtn:hover {
+  background: rgba(201, 169, 110, 0.12);
+  color: var(--gold-dark);
+}
+
+.footerPrimary {
+  color: var(--gold-dark);
+  font-weight: 500;
+}
+.footerPrimary:hover {
+  background: rgba(201, 169, 110, 0.15);
+}
