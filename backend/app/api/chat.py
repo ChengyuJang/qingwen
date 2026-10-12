@@ -8,17 +8,23 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sse_starlette.sse import EventSourceResponse
 
-from app.agents.llm import stream_chat
 from app.api.deps import get_current_user
 from app.db.models import Message, Session, User
 from app.db.session import AsyncSessionLocal, get_db
 
 router = APIRouter()
 
-SYSTEM_PROMPT = (
-    "你是青问，一位专业、有耐心的 AI 私人教练，擅长健身训练、营养饮食和恢复管理。"
-    "回答简洁、务实、可执行。用中文回答。"
-)
+_AGENT_NAME_MAP = {
+    "Orchestrator": "orchestrator",
+    "Intake": "intake",
+    "Training": "training",
+    "Nutrition": "nutrition",
+    "Recovery": "recovery",
+}
+
+
+def _norm(name: str) -> str:
+    return _AGENT_NAME_MAP.get(name, name.lower())
 
 
 class ChatRequest(BaseModel):
@@ -48,67 +54,126 @@ async def chat_stream(
         await db.commit()
         await db.refresh(sess)
 
-    # 2) 加载历史消息
-    result = await db.execute(
-        select(Message)
-        .where(Message.session_id == sess.id)
-        .order_by(Message.created_at.asc())
-    )
-    history = result.scalars().all()
-
-    # 3) 保存用户消息
+    # 2) 落库用户消息
     db.add(Message(session_id=sess.id, role="user", content=req.message))
     await db.commit()
 
-    # 4) 构造 LLM 消息
-    llm_messages: list[dict] = [{"role": "system", "content": SYSTEM_PROMPT}]
-    for m in history:
-        llm_messages.append({"role": m.role, "content": m.content})
-    llm_messages.append({"role": "user", "content": req.message})
-
     session_id = sess.id
     thread_id = sess.thread_id
+    user_message = req.message
 
     async def event_gen():
+        print("\n[SSE] 1. event_gen 开始", flush=True)
         yield {
             "event": "start",
-            "data": json.dumps({"session_id": session_id, "thread_id": thread_id}, ensure_ascii=False),
+            "data": json.dumps(
+                {"session_id": session_id, "thread_id": thread_id},
+                ensure_ascii=False,
+            ),
         }
+        print("[SSE] 2. start 已发送", flush=True)
 
-        full = ""
         try:
-            async for delta in stream_chat(llm_messages):
-                full += delta
-                yield {
-                    "event": "token",
-                    "data": json.dumps({"delta": delta}, ensure_ascii=False),
-                }
+            print("[SSE] 3. 开始 import", flush=True)
+            from agentscope.event import EventType
+            from agentscope.message import UserMsg
+            from app.agents.team import build_team
+            print("[SSE] 4. import 完成", flush=True)
+
+            print("[SSE] 5. 开始 build_team", flush=True)
+            pipe = await build_team()
+            print("[SSE] 6. build_team 完成", flush=True)
+
+            reply_to_agent: dict[str, str] = {}
+            agent_buffers: dict[str, str] = {}
+
+            user_msg = UserMsg(name="user", content=user_message)
+            print("[SSE] 7. 开始 reply_stream", flush=True)
+
+            async for evt in pipe.reply_stream(user_msg):
+                etype = evt.type
+
+                if etype == EventType.REPLY_START:
+                    agent = _norm(evt.name)
+                    reply_to_agent[evt.reply_id] = agent
+                    agent_buffers.setdefault(agent, "")
+                    yield {
+                        "event": "agent_start",
+                        "data": json.dumps({"agent": agent}, ensure_ascii=False),
+                    }
+
+                elif etype == EventType.TEXT_BLOCK_DELTA:
+                    agent = reply_to_agent.get(evt.reply_id, "unknown")
+                    agent_buffers[agent] = agent_buffers.get(agent, "") + evt.delta
+                    yield {
+                        "event": "token",
+                        "data": json.dumps(
+                            {"delta": evt.delta, "agent": agent},
+                            ensure_ascii=False,
+                        ),
+                    }
+
+                elif etype == EventType.TOOL_CALL_START:
+                    agent = reply_to_agent.get(evt.reply_id, "unknown")
+                    if evt.tool_call_name == "TeamAssign":
+                        yield {
+                            "event": "delegate",
+                            "data": json.dumps({"from": agent}, ensure_ascii=False),
+                        }
+                    else:
+                        yield {
+                            "event": "tool_call",
+                            "data": json.dumps(
+                                {"agent": agent, "tool": evt.tool_call_name},
+                                ensure_ascii=False,
+                            ),
+                        }
+
+                elif etype == EventType.REPLY_END:
+                    agent = reply_to_agent.get(evt.reply_id, "unknown")
+                    yield {
+                        "event": "agent_end",
+                        "data": json.dumps({"agent": agent}, ensure_ascii=False),
+                    }
+
         except Exception as e:
+            import traceback
+            print("\n" + "=" * 60, flush=True)
+            print(f"[SSE] 异常：{type(e).__name__}: {e}", flush=True)
+            traceback.print_exc()
+            print("=" * 60 + "\n", flush=True)
             yield {
                 "event": "error",
-                "data": json.dumps({"message": f"{type(e).__name__}: {e}"}, ensure_ascii=False),
+                "data": json.dumps(
+                    {"message": f"{type(e).__name__}: {e}"},
+                    ensure_ascii=False,
+                ),
             }
             return
 
-        # 5) 落库 AI 回复 + 更新会话时间
-        async with AsyncSessionLocal() as db2:
-            db2.add(
-                Message(
-                    session_id=session_id,
-                    role="assistant",
-                    agent="orchestrator",
-                    content=full,
+        # 落库
+        final = agent_buffers.get("orchestrator", "")
+        if final:
+            async with AsyncSessionLocal() as db2:
+                db2.add(
+                    Message(
+                        session_id=session_id,
+                        role="assistant",
+                        agent="orchestrator",
+                        content=final,
+                    )
                 )
-            )
-            s = (
-                await db2.execute(select(Session).where(Session.id == session_id))
-            ).scalar_one()
-            s.updated_at = datetime.now(timezone.utc)
-            await db2.commit()
+                s = (
+                    await db2.execute(select(Session).where(Session.id == session_id))
+                ).scalar_one()
+                s.updated_at = datetime.now(timezone.utc)
+                await db2.commit()
 
         yield {
             "event": "end",
-            "data": json.dumps({"status": "done", "session_id": session_id}, ensure_ascii=False),
+            "data": json.dumps(
+                {"status": "done", "session_id": session_id},
+                ensure_ascii=False,
+            ),
         }
-
     return EventSourceResponse(event_gen())

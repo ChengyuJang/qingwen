@@ -17,7 +17,7 @@ class Base(DeclarativeBase):
 
 engine = create_async_engine(
     settings.DATABASE_URL,
-    echo=settings.DEBUG,          # DEBUG 模式下打印 SQL
+    echo=False,          # DEBUG 模式下打印 SQL
     pool_pre_ping=True,           # 连接前 ping 一下，防止死连接
     pool_size=10,
     max_overflow=20,
