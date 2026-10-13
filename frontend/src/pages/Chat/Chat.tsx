@@ -75,9 +75,18 @@ export default function Chat() {
                   </div>
                 )
               }
+              // 前端过滤：如果这条 assistant 消息里有专家参与，
+              // 就完全隐藏 Orchestrator 的 segment（无论它说什么）
+              const hasSpecialist = m.segments.some(
+                (s) => s.agent !== 'orchestrator' && s.content.trim()
+              )
+              const visibleSegments = hasSpecialist
+                ? m.segments.filter((s) => s.agent !== 'orchestrator')
+                : m.segments
+
               return (
                 <div key={m.id} className={styles.assistantGroup}>
-                  {m.segments.map((seg, i) => (
+                  {visibleSegments.map((seg, i) => (
                     <AgentCard key={i} segment={seg} />
                   ))}
                 </div>

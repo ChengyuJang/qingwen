@@ -220,7 +220,7 @@ async function handleSubmit(e: FormEvent) {
                   boxShadow: '0 8px 24px rgba(28,28,30,0.08)',
                 }}
                 labelStyle={{ color: '#8C8279', fontSize: 11, marginBottom: 4 }}
-                formatter={(value: number) => [`${value} kg`, '体重']}
+                formatter={(value) => [`${value} kg`, '体重']}
               />
               {/* 平均值参考线 */}
               <ReferenceLine

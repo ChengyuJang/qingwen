@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: docker.1ms.run/pgvector/pgvector:pg16
+    image: pgvector/pgvector:pg16
     container_name: qingwen-postgres
     restart: unless-stopped
     environment:
@@ -30,6 +30,38 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: qingwen-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      ENV: prod
+      DEBUG: "false"
+      DATABASE_URL: postgresql+asyncpg://qingwen:qingwen_dev_pwd@postgres:5432/qingwen
+      REDIS_URL: redis://redis:6379/0
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY}
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: qingwen-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
 
 volumes:
   pg_data:

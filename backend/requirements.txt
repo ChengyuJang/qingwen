@@ -24,3 +24,6 @@ python-multipart>=0.0.20
 email-validator>=2.2.0
 dashscope>=1.20.0
 structlog>=24.4.0
+
+# AgentScope (多 Agent 协作)
+agentscope[full]==2.0.9
