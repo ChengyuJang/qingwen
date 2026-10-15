@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { API_BASE } from '@/api/client'
 
 export interface AgentSegment {
   agent: string
@@ -53,7 +54,7 @@ export function useChatStream(initialSessionId: number | null = null): StreamSta
     setStatus('')
     try {
       const token = localStorage.getItem('access_token')
-      const res = await fetch(`/api/sessions/${sid}/messages`, {
+      const res = await fetch(`${API_BASE}/sessions/${sid}/messages`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) return
@@ -153,7 +154,7 @@ export function useChatStream(initialSessionId: number | null = null): StreamSta
 
       try {
         const token = localStorage.getItem('access_token')
-        const resp = await fetch('/api/chat/stream', {
+        const resp = await fetch(`${API_BASE}/chat/stream`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
