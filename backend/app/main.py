@@ -61,6 +61,8 @@ app = FastAPI(
 # 中间件执行顺序（外 → 内）：
 #   Logging → RateLimit → CORS → 路由
 # 先 add 的在内层，后 add 的在外层
+app.add_middleware(RateLimitMiddleware)
+app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -68,8 +70,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(RateLimitMiddleware)
-app.add_middleware(RequestLoggingMiddleware)
 register_exception_handlers(app)
 
 
