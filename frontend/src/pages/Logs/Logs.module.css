@@ -1,0 +1,281 @@
+.wrap {
+  padding: 40px 56px 64px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 32px;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 32px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  margin-bottom: 8px;
+}
+
+.sub {
+  font-size: 14px;
+  color: var(--muted);
+  font-weight: 300;
+}
+
+/* ---------- 表单 ---------- */
+.form {
+  padding: 28px 32px;
+  border-radius: var(--radius-xl);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-md);
+  margin-bottom: 48px;
+}
+
+.formHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.formTitle {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  color: var(--ink);
+}
+
+.dateInput {
+  width: auto;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.row {
+  margin-bottom: 16px;
+  display: flex;
+  gap: 20px;
+}
+
+.field {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 训练 toggle */
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--muted);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  transition: all 0.25s var(--ease);
+}
+.toggle:hover {
+  border-color: var(--gold);
+  color: var(--ink);
+}
+.toggleOn {
+  background: var(--sage);
+  border-color: var(--sage);
+  color: #fff;
+}
+.toggleOn:hover {
+  background: var(--sage);
+  border-color: var(--sage);
+  color: #fff;
+}
+
+/* 心情 */
+.moodRow {
+  display: flex;
+  gap: 8px;
+}
+.moodBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.5);
+  transition: all 0.2s var(--ease);
+  opacity: 0.55;
+}
+.moodBtn:hover {
+  opacity: 1;
+  transform: scale(1.05);
+}
+.moodActive {
+  opacity: 1;
+  border-color: var(--gold);
+  background: rgba(201, 169, 110, 0.12);
+  transform: scale(1.1);
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+/* ---------- 历史 ---------- */
+.historyHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.historyTitle {
+  font-size: 11px;
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.historyCount {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.logCard {
+  padding: 20px 24px;
+  border-radius: var(--radius-lg);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--line);
+  transition: all var(--duration) var(--ease);
+  animation: rise 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.logCard:hover {
+  border-color: rgba(201, 169, 110, 0.3);
+  box-shadow: var(--shadow-sm);
+}
+
+.logHeader {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.logDate {
+  flex-shrink: 0;
+}
+
+.logDay {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.logWeekday {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+}
+
+.logBadges {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.moodEmoji {
+  font-size: 18px;
+}
+
+.sleepBadge {
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+.deleteBtn {
+  padding: 6px;
+  border-radius: 8px;
+  color: var(--muted);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+}
+.deleteBtn:hover {
+  color: var(--error);
+  background: rgba(184, 92, 74, 0.08);
+}
+
+.logBody {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.logItem {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+
+.logLabel {
+  display: inline-block;
+  font-size: 11px;
+  color: var(--gold);
+  letter-spacing: 0.06em;
+  margin-right: 8px;
+  text-transform: uppercase;
+}
+
+/* ---------- 空态 ---------- */
+.empty {
+  padding: 60px 32px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.emptyTitle {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  color: var(--ink);
+}
+
+.emptySub {
+  font-size: 14px;
+  color: var(--muted);
+  font-weight: 300;
+}
+
+.error {
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  background: rgba(184, 92, 74, 0.08);
+  color: var(--error);
+  font-size: 13px;
+  margin-bottom: 20px;
+}
