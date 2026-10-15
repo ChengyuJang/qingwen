@@ -176,3 +176,20 @@ class WeightRecord(Base):
     __table_args__ = (
         UniqueConstraint("user_id", "record_date", name="uq_weight_user_date"),
     )
+
+class Report(Base):
+    """用户报告：周报 / 月报。"""
+    __tablename__ = "reports"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    kind: Mapped[str] = mapped_column(String(20), nullable=False)  # weekly / monthly
+    period_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    period_end: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    content: Mapped[dict] = mapped_column(JSON, nullable=False)  # 结构化数据 + 生成的文本
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )

@@ -5,6 +5,11 @@
 """
 import asyncio
 import json
+import jieba
+from pathlib import Path as _Path
+_FITNESS_DICT = _Path(__file__).parent.parent / "data" / "fitness_dict.txt"
+if _FITNESS_DICT.exists():
+    jieba.load_userdict(str(_FITNESS_DICT))
 from pathlib import Path
 
 from sqlalchemy import text
@@ -35,14 +40,17 @@ async def main():
         await db.execute(text("DELETE FROM knowledge_chunks WHERE source = 'exercise_lib'"))
 
         for e, content, emb in zip(exercises, texts, embeddings):
+            # jieba 分词：空格连接，用于全文检索
+            content_seg = " ".join(jieba.cut(content))
+
             emb_str = "[" + ",".join(f"{v:.6f}" for v in emb) + "]"
             await db.execute(
                 text(
                     """
                     INSERT INTO knowledge_chunks
-                        (doc_id, source, title, content, metadata, embedding)
+                        (doc_id, source, title, content, content_seg, metadata, embedding)
                     VALUES
-                        (:doc_id, :source, :title, :content,
+                        (:doc_id, :source, :title, :content, :content_seg,
                          CAST(:metadata AS jsonb),
                          CAST(:embedding AS vector))
                     """
@@ -52,6 +60,7 @@ async def main():
                     "source": "exercise_lib",
                     "title": e["name"],
                     "content": content,
+                    "content_seg": content_seg,
                     "metadata": json.dumps(
                         {
                             "target": e["target"],

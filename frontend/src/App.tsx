@@ -11,6 +11,8 @@ import Logs from '@/pages/Logs/Logs'
 import Weight from '@/pages/Weight/Weight'
 import Settings from '@/pages/Settings/Settings'
 import { useAuthStore } from '@/stores/authStore'
+import { ConfirmDialog } from '@/components'
+import Reports from '@/pages/Reports/Reports'
 
 export default function App() {
   const init = useAuthStore((s) => s.init)
@@ -35,10 +37,12 @@ export default function App() {
           <Route path="/logs" element={<Logs />} />
           <Route path="/weight" element={<Weight />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/reports" element={<Reports />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <ConfirmDialog />
     </BrowserRouter>
   )
 }

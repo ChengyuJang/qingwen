@@ -27,3 +27,5 @@ structlog>=24.4.0
 
 # AgentScope (多 Agent 协作)
 agentscope[full]==2.0.9
+
+jieba>=0.42.1

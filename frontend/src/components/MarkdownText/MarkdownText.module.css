@@ -4,10 +4,11 @@
   gap: 16px;
 }
 
-/* ---------- 小标题 ---------- */
-.heading {
+/* ---------- 标题（专家用【】/ 报告用 ###） ---------- */
+.heading1,
+.heading2,
+.heading3 {
   font-family: var(--font-serif);
-  font-size: 15px;
   font-weight: 500;
   color: var(--ink);
   letter-spacing: 0.02em;
@@ -16,16 +17,41 @@
   position: relative;
 }
 
-.heading::before {
+.heading1::before,
+.heading2::before,
+.heading3::before {
   content: '';
   position: absolute;
   left: 0;
   top: 50%;
   transform: translateY(-50%);
-  width: 3px;
-  height: 14px;
   border-radius: 2px;
   background: var(--gold);
+}
+
+.heading1 {
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+.heading1::before {
+  width: 3px;
+  height: 18px;
+}
+
+.heading2 {
+  font-size: 16px;
+}
+.heading2::before {
+  width: 3px;
+  height: 16px;
+}
+
+.heading3 {
+  font-size: 15px;
+}
+.heading3::before {
+  width: 3px;
+  height: 14px;
 }
 
 /* ---------- 段落 ---------- */
@@ -52,9 +78,13 @@
   color: var(--ink-soft);
   padding-left: 18px;
   position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
 }
 
-.listItem::before {
+/* 无序列表点 */
+.list:not(.listOrdered) .listItem::before {
   content: '·';
   position: absolute;
   left: 4px;
@@ -63,6 +93,22 @@
   font-weight: 700;
   font-size: 16px;
   line-height: 1.6;
+}
+
+/* 有序列表数字 */
+.listOrdered .listItem {
+  padding-left: 26px;
+}
+
+.orderedIndex {
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--gold-dark);
+  font-weight: 500;
+  font-size: 13px;
+  font-family: var(--font-serif);
+  line-height: 1.85;
 }
 
 /* ---------- 加粗 ---------- */

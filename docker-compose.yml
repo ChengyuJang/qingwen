@@ -49,6 +49,8 @@ services:
       REDIS_URL: redis://redis:6379/0
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
       DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY}
+    volumes:
+      - ./backend:/app
     ports:
       - "8000:8000"
 

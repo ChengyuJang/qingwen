@@ -1,0 +1,97 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(28, 28, 30, 0.32);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: cdFade 0.2s ease;
+}
+
+@keyframes cdFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.dialog {
+  min-width: 320px;
+  max-width: 420px;
+  padding: 28px 32px 16px;
+  border-radius: var(--radius-xl);
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 32px 80px rgba(28, 28, 30, 0.2);
+  animation: cdRise 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes cdRise {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.message {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--ink);
+  text-align: center;
+  margin-bottom: 24px;
+  padding: 0 8px;
+}
+
+/* ---------- 底部按钮区：两端分布 ---------- */
+.actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+/* 取消：低调，hover 有淡色背景 */
+.cancelBtn {
+  padding: 10px 22px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+  font-family: inherit;
+}
+
+.cancelBtn:hover {
+  color: var(--ink);
+  background: rgba(28, 28, 30, 0.05);
+}
+
+/* 确定：金色文字突出，hover 有金色背景 */
+.confirmBtn {
+  padding: 10px 22px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+  color: var(--gold-dark);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+  font-family: inherit;
+}
+
+.confirmBtn:hover {
+  color: var(--gold);
+  background: rgba(201, 169, 110, 0.12);
+}

@@ -1,6 +1,5 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
-/** 单个 Agent 在一条 assistant 消息里的分段 */
 export interface AgentSegment {
   agent: string
   content: string
@@ -8,7 +7,6 @@ export interface AgentSegment {
   finished: boolean
 }
 
-/** 一条消息：用户消息是纯文本，assistant 消息由多个 AgentSegment 组成 */
 export interface ChatMessage {
   id: string
   role: 'user' | 'assistant'
@@ -34,6 +32,9 @@ export function useChatStream(initialSessionId: number | null = null): StreamSta
   const [error, setError] = useState('')
   const [sessionId, setSessionId] = useState<number | null>(initialSessionId)
   const abortRef = useRef<AbortController | null>(null)
+  // 关键：记录"已经处理过的 URL sessionId"，避免重复加载
+  // 初始用 undefined 表示"从未处理"，不能初始化成 initialSessionId
+  const handledSessionRef = useRef<number | null | undefined>(undefined)
 
   const newChat = useCallback(() => {
     abortRef.current?.abort()
@@ -45,6 +46,11 @@ export function useChatStream(initialSessionId: number | null = null): StreamSta
   }, [])
 
   const loadHistory = useCallback(async (sid: number) => {
+    abortRef.current?.abort()
+    setMessages([])          // 立即清空，避免闪现
+    setSessionId(sid)
+    setError('')
+    setStatus('')
     try {
       const token = localStorage.getItem('access_token')
       const res = await fetch(`/api/sessions/${sid}/messages`, {
@@ -57,28 +63,67 @@ export function useChatStream(initialSessionId: number | null = null): StreamSta
         agent: string | null
         content: string
       }>
-      const msgs: ChatMessage[] = data.map((m) => ({
-        id: String(m.id),
-        role: m.role as 'user' | 'assistant',
-        content: m.role === 'user' ? m.content : '',
-        segments:
-          m.role === 'assistant'
-            ? [
-                {
-                  agent: m.agent || 'orchestrator',
-                  content: m.content,
-                  tools: [],
-                  finished: true,
-                },
-              ]
-            : [],
-      }))
+      // 把消息按"用户 → assistant 分段组"归并
+      const msgs: ChatMessage[] = []
+
+      for (const m of data) {
+        if (m.role === 'user') {
+          msgs.push({
+            id: String(m.id),
+            role: 'user',
+            content: m.content,
+            segments: [],
+          })
+        } else {
+          // assistant：如果上一条也是 assistant，就追加 segment
+          const last = msgs[msgs.length - 1]
+          const segment: AgentSegment = {
+            agent: m.agent || 'orchestrator',
+            content: m.content,
+            tools: [],
+            finished: true,
+          }
+          if (last && last.role === 'assistant') {
+            last.segments.push(segment)
+          } else {
+            msgs.push({
+              id: String(m.id),
+              role: 'assistant',
+              content: '',
+              segments: [segment],
+            })
+          }
+        }
+      }
       setMessages(msgs)
-      setSessionId(sid)
     } catch (e) {
       console.error('加载历史失败', e)
     }
   }, [])
+
+  // 监听 URL 参数变化，但只处理"没处理过的"
+  // 加"正在处理"标志，防止重入
+  const processingRef = useRef(false)
+
+  useEffect(() => {
+    if (initialSessionId === handledSessionRef.current) return
+    if (processingRef.current) return
+
+    handledSessionRef.current = initialSessionId
+    processingRef.current = true
+
+    ;(async () => {
+      try {
+        if (initialSessionId) {
+          await loadHistory(initialSessionId)
+        } else {
+          newChat()
+        }
+      } finally {
+        processingRef.current = false
+      }
+    })()
+  }, [initialSessionId, loadHistory, newChat])
 
   const sendMessage = useCallback(
     async (text: string) => {
@@ -88,7 +133,6 @@ export function useChatStream(initialSessionId: number | null = null): StreamSta
       setStatus('正在连接…')
       setStreaming(true)
 
-      // 1) 立刻追加用户消息 + 空的 assistant 消息
       const userMsg: ChatMessage = {
         id: `u-${Date.now()}`,
         role: 'user',
@@ -104,7 +148,6 @@ export function useChatStream(initialSessionId: number | null = null): StreamSta
       }
       setMessages((prev) => [...prev, userMsg, assistantMsg])
 
-      // 2) 创建 abort controller
       const ac = new AbortController()
       abortRef.current = ac
 
@@ -154,9 +197,11 @@ export function useChatStream(initialSessionId: number | null = null): StreamSta
               continue
             }
 
-            // 分发事件
             if (eventType === 'start') {
-              setSessionId(data.session_id)
+              const newSid = data.session_id as number
+              setSessionId(newSid)
+              // 关键：标记"已处理"，这样 URL 同步后不会触发 loadHistory
+              handledSessionRef.current = newSid
               setStatus('')
             } else if (eventType === 'agent_start') {
               const agent = data.agent as string
@@ -181,7 +226,6 @@ export function useChatStream(initialSessionId: number | null = null): StreamSta
                 prev.map((m) => {
                   if (m.id !== assistantId) return m
                   const segments = [...m.segments]
-                  // 找最后一个匹配 agent 的分段
                   for (let i = segments.length - 1; i >= 0; i--) {
                     if (segments[i].agent === agent) {
                       segments[i] = {

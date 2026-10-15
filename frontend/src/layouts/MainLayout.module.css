@@ -12,7 +12,7 @@
   border-right: 1px solid var(--line);
   display: flex;
   flex-direction: column;
-  padding: 28px 16px 20px;
+  padding: 20px 16px 20px;
   overflow-y: auto;
 }
 
@@ -21,8 +21,8 @@
   font-size: 18px;
   font-weight: 500;
   letter-spacing: 0.08em;
-  padding: 0 12px;
-  margin-bottom: 28px;
+  padding: 16px 12px;
+  margin-bottom: 100px;
   cursor: pointer;
   color: var(--ink);
 }
@@ -33,7 +33,7 @@
 .newChat {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   padding: 12px 16px;
   border-radius: var(--radius-md);
   background: var(--ink);
@@ -41,7 +41,8 @@
   font-size: var(--text-sm);
   letter-spacing: 0.03em;
   transition: all var(--duration) var(--ease);
-  margin-bottom: 24px;
+  margin-top: 20px;
+  margin-bottom: 15px;
   width: 100%;
 }
 .newChat:hover {
@@ -89,10 +90,6 @@
   color: var(--gold);
 }
 
-.spacer {
-  flex: 1;
-  min-height: 20px;
-}
 
 .user {
   display: flex;
@@ -101,6 +98,8 @@
   padding: 16px 14px 8px;
   border-top: 1px solid var(--line);
   margin-top: 16px;
+  margin-top: auto;          /* ← 关键：自动推到最底部 */
+  flex-shrink: 0;
 }
 
 .avatar {
@@ -163,4 +162,164 @@
 .content {
   flex: 1;
   overflow-y: auto;
+}
+
+/* ---------- 最近对话列表 ---------- */
+.recentLabel {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0 14px;
+  margin: 28px 0 8px;
+}
+
+.recentList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 4px;
+  overflow-y: auto;
+  max-height: 260px;
+}
+
+.recentItem {
+  display: block;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: left;
+  transition: all 0.2s var(--ease);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 300;
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+}
+
+.recentItem:hover {
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--ink);
+}
+
+.recentItemActive {
+  background: var(--bg-elevated);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ---------- 防止 flex 挤压（关键修复） ---------- */
+.sidebar {
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  background: var(--bg-soft);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  padding: 40px 16px 20px;
+  overflow: hidden;           /* 从 auto 改成 hidden，内部元素自己滚 */
+  height: 100vh;
+}
+
+/* 顶部固定区：logo + 新对话 + 导航 */
+.sidebarTop {
+  flex-shrink: 0;
+}
+
+/* 中间可滚动区：最近对话 */
+.recentList {
+  flex: 1;                    /* 占据剩余空间 */
+  min-height: 0;              /* flex 内滚动的关键 */
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 4px;
+  margin-top: 4px;
+}
+
+/* 底部固定区：用户信息 */
+.user {
+  flex-shrink: 0;
+}
+/* ---------- 会话项容器（hover 显示删除） ---------- */
+.recentItemWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+  transition: background 0.2s var(--ease);
+}
+
+.recentItemWrap:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.recentItemWrap:has(.recentItemActive) {
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-sm);
+}
+
+/* 会话按钮本身去掉自己的背景（由 wrap 承载） */
+.recentItem {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 30px 8px 12px;    /* 右侧留出删除按钮的空间 */
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: left;
+  transition: color 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 300;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.recentItem:hover {
+  color: var(--ink);
+}
+
+.recentItemActive {
+  color: var(--ink);
+}
+
+/* 删除按钮：默认隐藏，hover 才显示 */
+.recentDelete {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  color: var(--muted);
+  opacity: 0;
+  transition: all 0.2s var(--ease);
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.recentItemWrap:hover .recentDelete {
+  opacity: 1;
+}
+
+.recentDelete:hover {
+  color: var(--error);
+  background: rgba(184, 92, 74, 0.12);
+}
+/* spacer 是唯一允许伸缩的元素 */
+.sidebar > .spacer {
+  flex-shrink: 1;
 }

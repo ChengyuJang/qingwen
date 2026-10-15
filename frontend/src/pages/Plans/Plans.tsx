@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Trash2 } from 'lucide-react'
 import { Badge, Button, MarkdownText } from '@/components'
 import { fetchPlans, deletePlan, type Plan } from '@/api/plans'
+import { confirmAsync } from '@/stores/confirmStore'
 import { extractErrorMessage } from '@/api/client'
 import styles from './Plans.module.css'
 
@@ -54,7 +55,7 @@ export default function Plans() {
   const latestId = plans.length > 0 ? plans[0].id : null
 
   async function handleDelete(id: number) {
-    if (!confirm('删除这条规划？')) return
+    if (!(await confirmAsync('删除这条规划？'))) return
     try {
       await deletePlan(id)
       setPlans((prev) => prev.filter((p) => p.id !== id))

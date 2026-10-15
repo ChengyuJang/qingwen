@@ -2,6 +2,12 @@ import json
 import uuid
 from app.agents.observability import RequestTrace
 import structlog
+
+import asyncio
+
+from app.agents.profile import update_user_profile
+from app.db.models import Message, Plan, Session, User, UserProfile
+
 from datetime import datetime, timezone
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
@@ -60,13 +66,73 @@ async def chat_stream(
         await db.commit()
         await db.refresh(sess)
 
-    # 2) 落库用户消息
+    # 2) 加载历史（注意：此时还没落库当前消息，避免读到重复）
+    # 2) 加载画像 + 历史
+    # 2a) 用户画像
+    profile_text = ""
+    profile_result = await db.execute(
+        select(UserProfile).where(UserProfile.user_id == current_user.id)
+    )
+    user_profile = profile_result.scalar_one_or_none()
+    if user_profile:
+        parts: list[str] = []
+        if user_profile.gender:
+            parts.append(f"性别：{user_profile.gender}")
+        if user_profile.height_cm:
+            parts.append(f"身高：{user_profile.height_cm}cm")
+        if user_profile.weight_kg:
+            parts.append(f"体重：{user_profile.weight_kg}kg")
+        if user_profile.goal:
+            parts.append(f"目标：{user_profile.goal}")
+        if user_profile.experience_level:
+            parts.append(f"经验：{user_profile.experience_level}")
+        if user_profile.weekly_frequency:
+            parts.append(f"每周训练：{user_profile.weekly_frequency}次")
+        if user_profile.equipment:
+            parts.append(f"器械：{user_profile.equipment}")
+        if user_profile.health_notes:
+            parts.append(f"健康备注：{user_profile.health_notes}")
+        if parts:
+            profile_text = "【已知用户画像 — 无需再问】\n" + "\n".join(parts) + "\n\n"
+
+    # 2b) 对话历史（滑动窗口）
+    history_prefix = ""
+    user_messages_for_extract: list[str] = []  # 用于后续画像提取
+    if req.session_id is not None:
+        hist_result = await db.execute(
+            select(Message)
+            .where(Message.session_id == sess.id)
+            .order_by(Message.created_at.desc())
+            .limit(10)
+        )
+        hist_messages = list(reversed(hist_result.scalars().all()))
+
+        if hist_messages:
+            lines = ["[历史对话 — 供参考，不要复述用户已知信息]"]
+            for m in hist_messages:
+                role = "用户" if m.role == "user" else (m.agent or "助手")
+                snippet = m.content.replace("\n", " ")
+                if len(snippet) > 200:
+                    snippet = snippet[:200] + "…"
+                lines.append(f"{role}：{snippet}")
+                # 收集用户的历史发言（用于画像提取）
+                if m.role == "user":
+                    user_messages_for_extract.append(m.content)
+            history_prefix = "\n".join(lines) + "\n\n"
+
+    # 2c) 落库当前用户消息
     db.add(Message(session_id=sess.id, role="user", content=req.message))
     await db.commit()
 
     session_id = sess.id
     thread_id = sess.thread_id
     user_message = req.message
+    # 最终给 Orchestrator 的内容：画像 + 历史 + 当前消息
+    full_content = profile_text + history_prefix + "[当前用户消息]\n" + user_message
+
+    # 用于后台画像提取的文本：用户历次发言
+    user_messages_for_extract.append(req.message)
+    extract_text = "\n".join(user_messages_for_extract)
 
     async def event_gen():
         print("\n[SSE] 1. event_gen 开始", flush=True)
@@ -94,7 +160,7 @@ async def chat_stream(
             reply_to_agent: dict[str, str] = {}
             agent_buffers: dict[str, str] = {}
 
-            user_msg = UserMsg(name="user", content=user_message)
+            user_msg = UserMsg(name="user", content=full_content)
             print("[SSE] 7. 开始 reply_stream", flush=True)
 
             async for evt in pipe.reply_stream(user_msg):
@@ -180,19 +246,23 @@ async def chat_stream(
 
         # 落库
         async with AsyncSessionLocal() as db2:
-            # 1) Orchestrator 汇总 → messages 表
-            final = agent_buffers.get("orchestrator", "")
-            if final.strip():
+            # 1) 每个 agent 独立存一条 message（按顺序）
+            for agent_name, content in agent_buffers.items():
+                if not content or not content.strip():
+                    continue
+                # 跳过纯句号/空白（Orchestrator 的过渡语）
+                if content.strip() in {'.', '。', '…'}:
+                    continue
                 db2.add(
                     Message(
                         session_id=session_id,
                         role="assistant",
-                        agent="orchestrator",
-                        content=final,
+                        agent=agent_name,
+                        content=content,
                     )
                 )
 
-            # 2) 各专家输出 → plans 表（upsert：同 session + kind 只保留最新）
+            # 2) 各专家输出 → plans 表（upsert）
             PLAN_KINDS = {"training", "nutrition", "recovery"}
             for agent_name, content in agent_buffers.items():
                 if agent_name not in PLAN_KINDS:
@@ -225,6 +295,12 @@ async def chat_stream(
             ).scalar_one()
             s.updated_at = datetime.now(timezone.utc)
             await db2.commit()
+        # 后台异步提取用户画像（fire-and-forget，不阻塞响应）
+        # 提取用户画像（同步等待，确保跑完）
+        try:
+            await update_user_profile(current_user.id, extract_text)
+        except Exception as e:
+            logger.warning("profile_update_failed", error=str(e))
 
         yield {
             "event": "end",

@@ -114,3 +114,20 @@ class PlanOut(BaseModel):
 
 class SessionWithPreview(SessionOut):
     last_message: str | None = None
+
+# ---------- Report ----------
+class ReportOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    kind: str
+    period_start: datetime
+    period_end: datetime
+    summary: str | None
+    content: dict
+    created_at: datetime
+
+
+class ReportGenerateRequest(BaseModel):
+    kind: str = "weekly"      # weekly / monthly
+    days: int | None = None   # 不传则按 kind 默认（weekly=7, monthly=30）

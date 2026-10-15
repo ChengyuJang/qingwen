@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from app.api import auth, chat, logs, plans, sessions, weight
+from app.api import auth, chat, logs, plans, reports, sessions, weight
 from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging, get_logger
@@ -54,6 +54,7 @@ app = FastAPI(
         {"name": "logs", "description": "每日打卡（训练/饮食/睡眠/心情）"},
         {"name": "weight", "description": "体重记录与趋势"},
         {"name": "system", "description": "健康检查与探活"},
+        {"name": "reports", "description": "周报/月报生成与查询"},
     ],
 )
 
@@ -71,12 +72,14 @@ app.add_middleware(RateLimitMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
 register_exception_handlers(app)
 
+
 app.include_router(chat.router, prefix="/api", tags=["chat"])
 app.include_router(auth.router, prefix="/api")
 app.include_router(sessions.router, prefix="/api")
 app.include_router(logs.router, prefix="/api")
 app.include_router(weight.router, prefix="/api")
 app.include_router(plans.router, prefix="/api")
+app.include_router(reports.router, prefix="/api")
 
 
 @app.get("/health", tags=["system"])

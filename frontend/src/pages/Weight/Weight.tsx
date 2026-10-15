@@ -11,6 +11,7 @@ import {
 } from 'recharts'
 import { Trash2, TrendingDown, TrendingUp, Minus } from 'lucide-react'
 import { Badge, Button, DatePicker, Input, Label } from '@/components'
+import { confirmAsync } from '@/stores/confirmStore'
 import {
   fetchWeights,
   fetchTrend,
@@ -130,7 +131,7 @@ async function handleSubmit(e: FormEvent) {
   }
 
   async function handleDelete(id: number) {
-    if (!confirm('删除这条记录？')) return
+    if (!(await confirmAsync('删除这条记录？'))) return
     try {
       await deleteWeight(id)
       setRecords((prev) => prev.filter((r) => r.id !== id))

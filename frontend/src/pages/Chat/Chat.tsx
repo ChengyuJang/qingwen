@@ -2,29 +2,41 @@ import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { SendHorizontal } from 'lucide-react'
 import { useChatStream } from '@/hooks/useChatStream'
+import { useSessionStore } from '@/stores/sessionStore'
 import AgentCard from './AgentCard'
 import Welcome from './Welcome'
 import styles from './Chat.module.css'
 
 export default function Chat() {
-  const [params] = useSearchParams()
-  const initialSession = params.get('session')
-    ? Number(params.get('session'))
-    : null
+  const [params, setParams] = useSearchParams()
+  const initialSession = params.get('session') ? Number(params.get('session')) : null
 
-  const { messages, streaming, status, error, sendMessage, loadHistory } =
-    useChatStream(initialSession)
+  const {
+    messages,
+    streaming,
+    status,
+    error,
+    sessionId,
+    sendMessage,
+    loadHistory,
+    newChat,
+  } = useChatStream(initialSession)
 
   const [input, setInput] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  // 首次进来：如有 sessionId 加载历史
+  // 新会话创建 → URL 同步 + 刷新侧边栏
+  // 用 ref 记录"已同步过的 sessionId"，防重复触发
+  const lastSyncedRef = useRef<number | null>(null)
+
   useEffect(() => {
-    if (initialSession) {
-      loadHistory(initialSession)
+    if (sessionId && sessionId !== lastSyncedRef.current) {
+      lastSyncedRef.current = sessionId
+      setParams({ session: String(sessionId) }, { replace: true })
+      useSessionStore.getState().refresh()
     }
-  }, [initialSession, loadHistory])
+  }, [sessionId, setParams])
 
   // 自动滚动到底部
   useEffect(() => {
@@ -75,8 +87,6 @@ export default function Chat() {
                   </div>
                 )
               }
-              // 前端过滤：如果这条 assistant 消息里有专家参与，
-              // 就完全隐藏 Orchestrator 的 segment（无论它说什么）
               const hasSpecialist = m.segments.some(
                 (s) => s.agent !== 'orchestrator' && s.content.trim()
               )

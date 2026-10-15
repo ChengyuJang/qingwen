@@ -5,28 +5,28 @@ interface Props {
 }
 
 /**
- * 轻量 Markdown 渲染，专为专家输出设计。
- * 支持：
- * - 【标题】→ 小标题
+ * 轻量 Markdown 渲染，兼容专家输出与报告两种格式：
+ * - 【标题】 / ### 标题 / ## 标题 / # 标题
+ * - - 无序列表 / 1. 有序列表
  * - **加粗**
- * - - 列表
- * - 空行 → 段落分隔
+ * - 空行分段
  */
 export default function MarkdownText({ text }: Props) {
   if (!text) return null
 
   const lines = text.split('\n')
-  const blocks: Array<
-    | { type: 'heading'; content: string }
-    | { type: 'list'; items: string[] }
+  type Block =
+    | { type: 'heading'; content: string; level: 1 | 2 | 3 }
+    | { type: 'list'; items: string[]; ordered: boolean }
     | { type: 'para'; content: string }
-  > = []
 
+  const blocks: Block[] = []
   let currentList: string[] = []
+  let currentOrdered = false
 
   function flushList() {
     if (currentList.length > 0) {
-      blocks.push({ type: 'list', items: currentList })
+      blocks.push({ type: 'list', items: currentList, ordered: currentOrdered })
       currentList = []
     }
   }
@@ -41,18 +41,46 @@ export default function MarkdownText({ text }: Props) {
       continue
     }
 
-    // 【标题】
-    const headingMatch = /^【(.+?)】$/.exec(trimmed)
-    if (headingMatch) {
+    // 【标题】 → 3 级标题
+    const bracketMatch = /^【(.+?)】$/.exec(trimmed)
+    if (bracketMatch) {
       flushList()
-      blocks.push({ type: 'heading', content: headingMatch[1] })
+      blocks.push({ type: 'heading', content: bracketMatch[1], level: 3 })
       continue
     }
 
-    // 列表项：- xxx / • xxx / · xxx
-    const listMatch = /^[-•·]\s+(.+)$/.exec(trimmed)
-    if (listMatch) {
-      currentList.push(listMatch[1])
+    // ### 标题 / ## 标题 / # 标题
+    const mdHeading = /^(#{1,4})\s+(.+)$/.exec(trimmed)
+    if (mdHeading) {
+      flushList()
+      const level = Math.min(mdHeading[1].length, 3) as 1 | 2 | 3
+      blocks.push({ type: 'heading', content: mdHeading[2], level })
+      continue
+    }
+
+    // 无序列表：- xxx / • xxx / · xxx
+    const ulMatch = /^[-•·]\s+(.+)$/.exec(trimmed)
+    if (ulMatch) {
+      if (!currentOrdered && currentList.length > 0) {
+        // 同类型列表，继续累积
+      } else if (currentOrdered) {
+        flushList()
+        currentOrdered = false
+      }
+      currentList.push(ulMatch[1])
+      continue
+    }
+
+    // 有序列表：1. xxx / 2. xxx
+    const olMatch = /^(\d+)[.、]\s*(.+)$/.exec(trimmed)
+    if (olMatch) {
+      if (!currentOrdered && currentList.length > 0) {
+        flushList()
+        currentOrdered = true
+      } else if (!currentOrdered && currentList.length === 0) {
+        currentOrdered = true
+      }
+      currentList.push(olMatch[2])
       continue
     }
 
@@ -67,18 +95,30 @@ export default function MarkdownText({ text }: Props) {
     <div className={styles.wrap}>
       {blocks.map((block, i) => {
         if (block.type === 'heading') {
+          const cls =
+            block.level === 1
+              ? styles.heading1
+              : block.level === 2
+                ? styles.heading2
+                : styles.heading3
           return (
-            <div key={i} className={styles.heading}>
-              {block.content}
+            <div key={i} className={cls}>
+              {renderInline(block.content)}
             </div>
           )
         }
         if (block.type === 'list') {
           return (
-            <ul key={i} className={styles.list}>
+            <ul
+              key={i}
+              className={`${styles.list} ${block.ordered ? styles.listOrdered : ''}`}
+            >
               {block.items.map((item, j) => (
                 <li key={j} className={styles.listItem}>
-                  {renderInline(item)}
+                  {block.ordered ? (
+                    <span className={styles.orderedIndex}>{j + 1}.</span>
+                  ) : null}
+                  <span>{renderInline(item)}</span>
                 </li>
               ))}
             </ul>

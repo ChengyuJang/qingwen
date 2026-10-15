@@ -3,14 +3,15 @@ import { LogOut, Mail, Calendar, Info, Shield } from 'lucide-react'
 import { Badge, Button } from '@/components'
 import { useAuthStore } from '@/stores/authStore'
 import styles from './Settings.module.css'
+import { confirmAsync } from '@/stores/confirmStore'
 
 export default function Settings() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
 
-  function handleLogout() {
-    if (!confirm('确定要退出登录吗？')) return
+ async function handleLogout() {
+    if (!(await confirmAsync('确定要退出登录吗？'))) return
     logout()
     navigate('/login')
   }
