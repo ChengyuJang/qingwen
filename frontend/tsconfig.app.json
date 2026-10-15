@@ -8,10 +8,12 @@
     "allowArbitraryExtensions": true,
     "skipLibCheck": true,
 
-    /* 路径别名 */
+    /* 路径别名 —— 修复 Vercel 部署 */
+    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     },
+    "ignoreDeprecations": "6.0",
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -21,7 +23,7 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
-    /* Linting（放宽，避免开发期反复报小错） */
+    /* Linting */
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "erasableSyntaxOnly": true,
