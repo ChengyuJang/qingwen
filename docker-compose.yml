@@ -49,6 +49,7 @@ services:
       REDIS_URL: redis://redis:6379/0
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
       DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY}
+      UV_DEFAULT_INDEX: https://pypi.tuna.tsinghua.edu.cn/simple
     volumes:
       - ./backend:/app
     ports:

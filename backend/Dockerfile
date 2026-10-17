@@ -16,7 +16,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # 先装依赖（利用 Docker 缓存层）
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+# 使用清华源加速安装
+RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
 
 # 复制代码
 COPY . .

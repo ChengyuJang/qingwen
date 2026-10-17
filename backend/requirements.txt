@@ -29,3 +29,8 @@ structlog>=24.4.0
 agentscope[full]==2.0.9
 
 jieba>=0.42.1
+
+#MCP
+uv
+
+#BiliBil

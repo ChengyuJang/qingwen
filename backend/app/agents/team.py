@@ -5,6 +5,7 @@ TeamPipeline 会在第一次 reply_stream 时自动给 Orchestrator 注入
 """
 from agentscope.agent import Agent
 from agentscope.pipeline import TeamMember, TeamPipeline
+from app.agents.video_agent import build_video_agent
 
 from app.agents.model import get_model
 from app.agents.specialists import build_all_specialists
@@ -17,6 +18,7 @@ ORCHESTRATOR_PROMPT = """你是「轻问」的总协调者，带领一支健身�
 - Training：训练方案。用户要训练计划、动作建议、动作替换时派给它。
 - Nutrition：饮食方案。用户问热量、蛋白质、吃什么时派给它。
 - Recovery：恢复建议。用户问睡眠、疲劳、能不能练时派给它。
+- Video：视频推荐。当用户问“有没有视频教程”、“推荐个练腿视频”时，派给它
 
 【核心工作流程 —— 必须遵守】
 1. 判断用户意图。
@@ -37,6 +39,14 @@ ORCHESTRATOR_PROMPT = """你是「轻问」的总协调者，带领一支健身�
    如果用户画像里有信息，一定要带上，避免专家重复追问。
    
 【派活优先级 —— 关键，必须严格遵守】
+**⚠️ 特例优先（最高优先级，直接派活，严禁派 Intake）：**
+1. 用户想找**视频教程**、**动作示范**（如“推荐深蹲视频”）：直接派给 **Video**。看视频不需要身高体重！
+2. 用户问**单点知识**（如“深蹲怎么做”、“蛋白质吃多少”）：直接派给对应的 **Training** 或 **Nutrition**。不需要身高体重！
+
+**常规场景判断（针对要求制定综合计划的用户）：**
+判断当前用户画像是否完整（身高、体重、目标）：
+- 信息不全：只派 Intake。
+- 信息完整：派多个专家协作。
 
 **必要字段清单**（生成任何方案都需要）：
 1. 身高
@@ -108,6 +118,7 @@ ORCHESTRATOR_PROMPT = """你是「轻问」的总协调者，带领一支健身�
 async def build_team() -> TeamPipeline:
     """组装完整的团队。每次请求新建，保证 Agent 状态隔离。"""
     specialists = await build_all_specialists()
+    video_agent = await build_video_agent()
 
     orchestrator = Agent(
         name="Orchestrator",
@@ -121,6 +132,10 @@ async def build_team() -> TeamPipeline:
         TeamMember(agent=specialists["training"], description="训练方案：制定训练计划、推荐动作、替换禁忌动作"),
         TeamMember(agent=specialists["nutrition"], description="饮食方案：计算热量、分配营养素、给出食材建议"),
         TeamMember(agent=specialists["recovery"], description="恢复建议：评估睡眠状态、建议训练强度调整、放松方案"),
+        TeamMember(
+            agent=video_agent,
+            description="视频推荐：当用户想找动作教学视频、跟练视频时，派给它",
+        ),
     ]
 
     return TeamPipeline(leader=orchestrator, members=members)
