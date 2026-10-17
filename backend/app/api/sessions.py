@@ -52,7 +52,7 @@ async def list_sessions(
         select(Message.session_id, Message.content, Message.created_at)
         .where(Message.session_id.in_(session_ids))
         .order_by(Message.session_id, Message.created_at.desc())
-        .distinct_on(Message.session_id)
+        .distinct(Message.session_id)
     )
     msg_result = await db.execute(latest_subq)
     preview_map = {}
