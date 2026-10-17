@@ -189,12 +189,14 @@ async def chat_stream(
                 if etype == EventType.REPLY_START:
                     agent = _norm(evt.name)
                     reply_to_agent[evt.reply_id] = agent
-                    agent_buffers.setdefault(agent, "")
-                    trace.on_reply_start(evt.reply_id, agent)
-                    yield {
-                        "event": "agent_start",
-                        "data": json.dumps({"agent": agent}, ensure_ascii=False),
-                    }
+
+                    # 👇 关键修改：如果这个 Agent 已经开始过了，就不再发 start 事件
+                    if agent not in agent_buffers:
+                        agent_buffers[agent] = ""
+                        yield {
+                            "event": "agent_start",
+                            "data": json.dumps({"agent": agent}, ensure_ascii=False),
+                        }
 
                 elif etype == EventType.MODEL_CALL_START:
                     trace.on_model_call_start(evt.reply_id, agent)

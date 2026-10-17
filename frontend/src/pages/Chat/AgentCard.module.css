@@ -52,3 +52,29 @@
   letter-spacing: 0.02em;
   animation: rise 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
+
+.orchestrator {
+  align-self: flex-start;
+  width: 100%;
+  max-width: 78%;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  border-left: 3px solid var(--gold);
+  background: rgba(201, 169, 110, 0.05);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  animation: rise 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.orchestratorText {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--ink);
+}
+
+.cursor {
+  display: inline-block;
+  color: var(--gold);
+  animation: pulse 1s infinite;
+  margin-left: 2px;
+}

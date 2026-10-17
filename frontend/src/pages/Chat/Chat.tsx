@@ -88,8 +88,9 @@ export default function Chat() {
                 )
               }
               const hasSpecialist = m.segments.some(
-                (s) => s.agent !== 'orchestrator' && s.content.trim()
+                (s) => s.agent !== 'orchestrator'
               )
+
               const visibleSegments = hasSpecialist
                 ? m.segments.filter((s) => s.agent !== 'orchestrator')
                 : m.segments

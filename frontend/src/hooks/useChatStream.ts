@@ -224,7 +224,7 @@ export function useChatStream(initialSessionId: number | null = null): StreamSta
         const decoder = new TextDecoder()
         let buffer = ''
 
-        while (true) {
+                while (true) {
           const { done, value } = await reader.read()
           if (done) break
           buffer += decoder.decode(value, { stream: true })
@@ -256,35 +256,41 @@ export function useChatStream(initialSessionId: number | null = null): StreamSta
               setStatus('')
             } else if (eventType === 'agent_start') {
               const agent = data.agent as string
-
-              // 如果当前没人说话，直接设为活跃
-              if (!activeAgentRef.current) {
-                activeAgentRef.current = agent
-              } else if (!pendingTokensRef.current[agent]) {
-                // 如果有人在说话，加入缓存队列
-                pendingTokensRef.current[agent] = []
-              }
+              if (!pendingTokensRef.current[agent]) pendingTokensRef.current[agent] = []
 
               setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === assistantId
-                    ? { ...m, segments: [...m.segments, { agent, content: '', tools: [], finished: false }] }
-                    : m
-                )
+                prev.map((m) => {
+                  if (m.id !== assistantId) return m
+
+                  const hasActiveSegment = m.segments.some(
+                    (s) => s.agent === agent && !s.finished
+                  )
+
+                  if (hasActiveSegment) {
+                    return m
+                  }
+
+                  return {
+                    ...m,
+                    segments: [...m.segments, { agent, content: '', tools: [], finished: false }]
+                  }
+                })
               )
               setStatus(agentLabel(agent) + ' 正在输入…')
             } else if (eventType === 'token') {
               const agent = data.agent as string
               const delta = data.delta as string
 
-              // 如果不是当前活跃的 Agent，或者打字机正在播，先放进缓存
+              if (!activeAgentRef.current) {
+                activeAgentRef.current = agent
+              }
+
               if (activeAgentRef.current !== agent || typingIntervalRef.current) {
                 if (!pendingTokensRef.current[agent]) pendingTokensRef.current[agent] = []
                 pendingTokensRef.current[agent].push(delta)
-                return
+                continue
               }
 
-              // 否则正常更新
               setMessages((prev) =>
                 prev.map((m) => {
                   if (m.id !== assistantId) return m
@@ -316,22 +322,20 @@ export function useChatStream(initialSessionId: number | null = null): StreamSta
               )
             } else if (eventType === 'agent_end') {
               const agent = data.agent as string
-
               setMessages((prev) =>
                 prev.map((m) => {
                   if (m.id !== assistantId) return m
-                  const segments = m.segments.map((s) => (s.agent === agent ? { ...s, finished: true } : s))
+                  const segments = m.segments.map((s) =>
+                    s.agent === agent ? { ...s, finished: true } : s
+                  )
                   return { ...m, segments }
                 })
               )
 
-              // 如果结束的是当前活跃的 Agent，尝试播放队列里的下一个
               if (activeAgentRef.current === agent) {
-                // 如果打字机正在播，先让它播完
-                if (typingIntervalRef.current) return
-
-                // 否则直接找下一个
-                startNextAgent()
+                if (!typingIntervalRef.current) {
+                  startNextAgent()
+                }
               }
             } else if (eventType === 'end') {
               setStatus('')
