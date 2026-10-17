@@ -95,6 +95,25 @@ async def chat_stream(
         if parts:
             profile_text = "【已知用户画像 — 无需再问】\n" + "\n".join(parts) + "\n\n"
 
+    # ============ 信息完整度判断 ============
+    # 检查画像是否包含生成方案所需的 3 个关键字段
+    profile_complete = False
+    if user_profile:
+        has_height = user_profile.height_cm is not None
+        has_weight = user_profile.weight_kg is not None
+        has_goal = user_profile.goal is not None
+        profile_complete = has_height and has_weight and has_goal
+
+    # 如果画像不全，给 Orchestrator 一个硬指令
+    if not profile_complete:
+        profile_text += (
+            "\n【系统指令 —— 优先级最高】\n"
+            "当前用户画像信息不完整（缺身高/体重/目标）。\n"
+            "**本轮你只能派 Intake 一个专家，禁止派 Training / Nutrition / Recovery。**\n"
+            "等 Intake 采集完信息、用户回答后，下一轮再派其他专家。\n\n"
+        )
+    # ========================================
+
     # 2b) 对话历史（滑动窗口）
     history_prefix = ""
     user_messages_for_extract: list[str] = []  # 用于后续画像提取
