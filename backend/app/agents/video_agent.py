@@ -25,13 +25,19 @@ VIDEO_PROMPT = """你是「轻问」团队的视频推荐专家。
 
 async def build_video_agent() -> Agent:
     """构造带 B 站 MCP 工具的 Video Agent。"""
+    # ⚠️ 临时降级：防止 MCP 连接超时导致整个后端崩溃
+    return Agent(
+        name="Video",
+        system_prompt="你是视频推荐专家，但当前视频搜索服务（MCP）因云端网络原因暂时不可用，请引导用户自己去 B 站搜索对应动作的教学视频。",
+        model=get_model(),
+    )
     try:
         mcp_client = MCPClient(
             name="bilibili",
             is_stateful=True,
             mcp_config=StdioMCPConfig(
                 command="uvx",
-                args=["--from", "astron-bilibili-mcp", "astron-bilibili-mcp"],
+                args=["-m", "astron_bilibili_mcp"],
             ),
         )
         logger.info("connecting_bilibili_mcp_start")

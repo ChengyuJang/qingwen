@@ -34,3 +34,4 @@ jieba>=0.42.1
 uv
 
 #BiliBil
+astron-bilibili-mcp
