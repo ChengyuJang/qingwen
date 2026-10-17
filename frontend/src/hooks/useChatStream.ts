@@ -36,6 +36,10 @@ export function useChatStream(initialSessionId: number | null = null): StreamSta
   // 关键：记录"已经处理过的 URL sessionId"，避免重复加载
   // 初始用 undefined 表示"从未处理"，不能初始化成 initialSessionId
   const handledSessionRef = useRef<number | null | undefined>(undefined)
+    // 用于控制串行输出的状态
+  const activeAgentRef = useRef<string | null>(null)
+  const pendingTokensRef = useRef<Record<string, string[]>>({})
+  const typingIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   const newChat = useCallback(() => {
     abortRef.current?.abort()
@@ -126,6 +130,53 @@ export function useChatStream(initialSessionId: number | null = null): StreamSta
     })()
   }, [initialSessionId, loadHistory, newChat])
 
+    const startNextAgent = () => {
+    activeAgentRef.current = null
+    const nextAgent = Object.keys(pendingTokensRef.current).find(k => pendingTokensRef.current[k].length > 0)
+    if (!nextAgent) return
+
+    activeAgentRef.current = nextAgent
+    const tokens = [...pendingTokensRef.current[nextAgent]]
+    pendingTokensRef.current[nextAgent] = []
+
+    let i = 0
+    typingIntervalRef.current = setInterval(() => {
+      // 检查播放过程中有没有新的真实 token 进来
+      if (i >= tokens.length) {
+        if (pendingTokensRef.current[nextAgent!] && pendingTokensRef.current[nextAgent!].length > 0) {
+           tokens.push(...pendingTokensRef.current[nextAgent!])
+           pendingTokensRef.current[nextAgent!] = []
+        } else {
+           clearInterval(typingIntervalRef.current!)
+           typingIntervalRef.current = null
+           activeAgentRef.current = null
+           startNextAgent() // 递归找下一个
+           return
+        }
+      }
+
+      const d = tokens[i]
+      i++
+      setMessages((prev) =>
+        prev.map((m) => {
+          // 匹配正在流式输出的那条 assistant 消息
+          if (m.role !== 'assistant' || m.segments.length === 0) return m
+          const isLastMsg = prev[prev.length - 1].id === m.id
+          if (!isLastMsg) return m
+
+          const segments = [...m.segments]
+          for (let j = segments.length - 1; j >= 0; j--) {
+            if (segments[j].agent === nextAgent) {
+              segments[j] = { ...segments[j], content: segments[j].content + d }
+              break
+            }
+          }
+          return { ...m, segments }
+        })
+      )
+    }, 30) // 30ms 吐一个字
+  }
+
   const sendMessage = useCallback(
     async (text: string) => {
       if (!text.trim() || streaming) return
@@ -201,21 +252,23 @@ export function useChatStream(initialSessionId: number | null = null): StreamSta
             if (eventType === 'start') {
               const newSid = data.session_id as number
               setSessionId(newSid)
-              // 关键：标记"已处理"，这样 URL 同步后不会触发 loadHistory
               handledSessionRef.current = newSid
               setStatus('')
             } else if (eventType === 'agent_start') {
               const agent = data.agent as string
+
+              // 如果当前没人说话，直接设为活跃
+              if (!activeAgentRef.current) {
+                activeAgentRef.current = agent
+              } else if (!pendingTokensRef.current[agent]) {
+                // 如果有人在说话，加入缓存队列
+                pendingTokensRef.current[agent] = []
+              }
+
               setMessages((prev) =>
                 prev.map((m) =>
                   m.id === assistantId
-                    ? {
-                        ...m,
-                        segments: [
-                          ...m.segments,
-                          { agent, content: '', tools: [], finished: false },
-                        ],
-                      }
+                    ? { ...m, segments: [...m.segments, { agent, content: '', tools: [], finished: false }] }
                     : m
                 )
               )
@@ -223,16 +276,22 @@ export function useChatStream(initialSessionId: number | null = null): StreamSta
             } else if (eventType === 'token') {
               const agent = data.agent as string
               const delta = data.delta as string
+
+              // 如果不是当前活跃的 Agent，或者打字机正在播，先放进缓存
+              if (activeAgentRef.current !== agent || typingIntervalRef.current) {
+                if (!pendingTokensRef.current[agent]) pendingTokensRef.current[agent] = []
+                pendingTokensRef.current[agent].push(delta)
+                return
+              }
+
+              // 否则正常更新
               setMessages((prev) =>
                 prev.map((m) => {
                   if (m.id !== assistantId) return m
                   const segments = [...m.segments]
                   for (let i = segments.length - 1; i >= 0; i--) {
                     if (segments[i].agent === agent) {
-                      segments[i] = {
-                        ...segments[i],
-                        content: segments[i].content + delta,
-                      }
+                      segments[i] = { ...segments[i], content: segments[i].content + delta }
                       break
                     }
                   }
@@ -248,10 +307,7 @@ export function useChatStream(initialSessionId: number | null = null): StreamSta
                   const segments = [...m.segments]
                   for (let i = segments.length - 1; i >= 0; i--) {
                     if (segments[i].agent === agent) {
-                      segments[i] = {
-                        ...segments[i],
-                        tools: [...segments[i].tools, tool],
-                      }
+                      segments[i] = { ...segments[i], tools: [...segments[i].tools, tool] }
                       break
                     }
                   }
@@ -260,15 +316,23 @@ export function useChatStream(initialSessionId: number | null = null): StreamSta
               )
             } else if (eventType === 'agent_end') {
               const agent = data.agent as string
+
               setMessages((prev) =>
                 prev.map((m) => {
                   if (m.id !== assistantId) return m
-                  const segments = m.segments.map((s) =>
-                    s.agent === agent ? { ...s, finished: true } : s
-                  )
+                  const segments = m.segments.map((s) => (s.agent === agent ? { ...s, finished: true } : s))
                   return { ...m, segments }
                 })
               )
+
+              // 如果结束的是当前活跃的 Agent，尝试播放队列里的下一个
+              if (activeAgentRef.current === agent) {
+                // 如果打字机正在播，先让它播完
+                if (typingIntervalRef.current) return
+
+                // 否则直接找下一个
+                startNextAgent()
+              }
             } else if (eventType === 'end') {
               setStatus('')
             } else if (eventType === 'error') {
@@ -284,6 +348,11 @@ export function useChatStream(initialSessionId: number | null = null): StreamSta
         setStreaming(false)
         setStatus('')
         abortRef.current = null
+        // 清理打字机定时器
+        if (typingIntervalRef.current) {
+          clearInterval(typingIntervalRef.current)
+          typingIntervalRef.current = null
+        }
       }
     },
     [sessionId, streaming]
