@@ -1,3 +1,4 @@
+import asyncio
 import structlog
 from agentscope.agent import Agent
 from agentscope.mcp import MCPClient, StdioMCPConfig
@@ -10,23 +11,21 @@ VIDEO_PROMPT = """你是「轻问」团队的视频推荐专家。
 当用户需要学习某个训练动作、或者想找相关的跟练视频时，你可以调用 Bilibili 搜索工具，为用户推荐高质量的教学视频。
 
 【工作流程】
-1. 提取用户想找的动作名称或关键词（如“深蹲”、“练腿”）。
-2. 调用 `search_content` 工具搜索视频。
+1. 提取用户想找的动作名称或关键词（如"深蹲"、"练腿"）。
+2. 调用 MCP 工具 `search_content` 搜索视频。
 3. 从结果中挑选 1-3 个标题最相关、播放量高的视频。
-4. 用友好的语气回复，直接给出视频标题和 BVID，方便用户去搜索。
 
 【输出格式要求】
-请必须使用 Markdown 的超链接格式输出视频，例如：
+请必须使用 Markdown 的超链接格式输出视频，用户可以直接点击跳转。
+格式必须严格遵循：
 - [视频标题](https://www.bilibili.com/video/BV号)
-- 动作要点：xxx
-这样可以方便用户直接点击跳转。
+- 一句话推荐理由
 """
 
+
 async def build_video_agent() -> Agent:
-    """构造一个带 B 站 MCP 工具的 Video Agent。"""
+    """构造带 B 站 MCP 工具的 Video Agent。"""
     try:
-        # 1. 配置并连接 StdIO MCP Server
-        # 这里使用 uvx 自动拉取并运行 astron-bilibili-mcp
         mcp_client = MCPClient(
             name="bilibili",
             is_stateful=True,
@@ -35,13 +34,14 @@ async def build_video_agent() -> Agent:
                 args=["--from", "astron-bilibili-mcp", "astron-bilibili-mcp"],
             ),
         )
-        await mcp_client.connect()
-        logger.info("mcp_bilibili_connected")
+        logger.info("connecting_bilibili_mcp_start")
 
-        # 2. 把 MCP 挂载到 Toolkit
+        # 🔥 关键修复：加上 30 秒超时，防止网络不好导致整个系统卡死
+        await asyncio.wait_for(mcp_client.connect(), timeout=30.0)
+
+        logger.info("mcp_bilibili_connected")
         toolkit = Toolkit(mcps=[mcp_client])
 
-        # 3. 创建 Video Agent
         return Agent(
             name="Video",
             system_prompt=VIDEO_PROMPT,
@@ -49,10 +49,10 @@ async def build_video_agent() -> Agent:
             toolkit=toolkit,
         )
     except Exception as e:
+        # 如果连不上，直接降级，不让用户干等
         logger.error("mcp_connect_failed", error=str(e))
-        # 如果 MCP 连不上，退化成无工具的普通 Agent，避免整个系统崩溃
         return Agent(
             name="Video",
-            system_prompt="你是视频推荐专家，但当前视频搜索服务不可用，请引导用户自行去 B 站搜索。",
+            system_prompt="你是视频推荐专家，但当前视频搜索服务暂不可用，请直接引导用户去 B 站搜索对应动作。",
             model=get_model(),
         )
