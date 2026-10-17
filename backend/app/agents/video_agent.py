@@ -1,4 +1,5 @@
 import asyncio
+import asyncio
 import structlog
 from agentscope.agent import Agent
 from agentscope.mcp import MCPClient, StdioMCPConfig
@@ -25,27 +26,21 @@ VIDEO_PROMPT = """你是「轻问」团队的视频推荐专家。
 
 async def build_video_agent() -> Agent:
     """构造带 B 站 MCP 工具的 Video Agent。"""
-    # ⚠️ 临时降级：防止 MCP 连接超时导致整个后端崩溃
-    return Agent(
-        name="Video",
-        system_prompt="你是视频推荐专家，但当前视频搜索服务（MCP）因云端网络原因暂时不可用，请引导用户自己去 B 站搜索对应动作的教学视频。",
-        model=get_model(),
-    )
     try:
         mcp_client = MCPClient(
             name="bilibili",
             is_stateful=True,
             mcp_config=StdioMCPConfig(
-                command="uvx",
-                args=["-m", "astron_bilibili_mcp"],
+                # 🔥 核心修改：直接调用已安装在系统里的命令，不再用 uvx
+                command="astron-bilibili-mcp",
+                args=[],
             ),
         )
         logger.info("connecting_bilibili_mcp_start")
 
-        # 🔥 关键修复：加上 30 秒超时，防止网络不好导致整个系统卡死
-        await asyncio.wait_for(mcp_client.connect(), timeout=30.0)
-
+        await asyncio.wait_for(mcp_client.connect(), timeout=15.0)
         logger.info("mcp_bilibili_connected")
+
         toolkit = Toolkit(mcps=[mcp_client])
 
         return Agent(
@@ -55,7 +50,6 @@ async def build_video_agent() -> Agent:
             toolkit=toolkit,
         )
     except Exception as e:
-        # 如果连不上，直接降级，不让用户干等
         logger.error("mcp_connect_failed", error=str(e))
         return Agent(
             name="Video",
