@@ -14,6 +14,12 @@ VIDEO_PROMPT = """你是「轻问」团队的视频推荐专家。
 2. 调用 `search_content` 工具搜索视频。
 3. 从结果中挑选 1-3 个标题最相关、播放量高的视频。
 4. 用友好的语气回复，直接给出视频标题和 BVID，方便用户去搜索。
+
+【输出格式要求】
+请必须使用 Markdown 的超链接格式输出视频，例如：
+- [视频标题](https://www.bilibili.com/video/BV号)
+- 动作要点：xxx
+这样可以方便用户直接点击跳转。
 """
 
 async def build_video_agent() -> Agent:

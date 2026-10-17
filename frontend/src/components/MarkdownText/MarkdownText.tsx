@@ -135,9 +135,13 @@ export default function MarkdownText({ text }: Props) {
 }
 
 /** 行内格式：**加粗** */
+/** 行内格式：**加粗** 和 [超链接](url) */
 function renderInline(text: string) {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g)
+  // 匹配 **加粗** 或 [文字](链接)
+  const parts = text.split(/(\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\))/g)
+
   return parts.map((part, i) => {
+    // 处理加粗
     if (part.startsWith('**') && part.endsWith('**')) {
       return (
         <strong key={i} className={styles.strong}>
@@ -145,6 +149,17 @@ function renderInline(text: string) {
         </strong>
       )
     }
+
+    // 处理超链接
+    const linkMatch = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(part)
+    if (linkMatch) {
+      return (
+        <a key={i} href={linkMatch[2]} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold)', textDecoration: 'underline' }}>
+          {linkMatch[1]}
+        </a>
+      )
+    }
+
     return <span key={i}>{part}</span>
   })
 }
